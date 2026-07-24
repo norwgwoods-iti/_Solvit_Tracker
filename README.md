@@ -63,8 +63,8 @@ uvicorn main:app --reload
 * **Uvicorn** — асинхронный ASGI-сервер
 
 После запуска сервер будет доступен по следующим адресам:
-* **🌐 API Server:** http://localhost:8000
-* **📑 Interactive OpenAPI (Swagger) Docs:** http://localhost:8000/docs
+* **🌐 API Server:** ```http://localhost:8000```
+* **📑 Interactive OpenAPI (Swagger) Docs:** ```http://localhost:8000/docs```
 
 ### 💽 Инициализация Базы Данных
 
@@ -79,7 +79,7 @@ uvicorn main:app --reload
 ## Способ 1: Через Swagger UI (Рекомендуется)
 
 0. Перейдите по адресу http://localhost:8000/docs.
-1. Раскройте тег Установка Базы Данных 💽.
+1. Раскройте тег ```Установка Базы Данных 💽```.
 2. Нажмите Try it out ➔ Execute.
    
 ## Способ 2: Через cURL
@@ -89,12 +89,12 @@ curl -X 'POST' 'http://localhost:8000/setup_database' -H 'accept: application/js
 ```
 
 [!WARNING]
-Данный метод выполняет drop_all и create_all. Вызов метода полностью очищает существующую БД и создает структуру с нуля!
+Данный метод выполняет ```drop_all``` и ```create_all```. Вызов метода полностью очищает существующую БД и создает структуру с нуля!
 
 ### 🚀 Запуск Фронтенда
 Фронтенд полностью автономен и не требует сборки (Webpack/Vite не нужны).
-0. Убедитесь, что сервер FastAPI запущен и принимает запросы на http://localhost:8000.
-1. Откройте файл index.html прямо в вашем браузере (двойным кликом или через расширение Live Server в VS Code).
+0. Убедитесь, что сервер FastAPI запущен и принимает запросы на ```http://localhost:8000```.
+1. Откройте файл ```index.html``` прямо в вашем браузере (двойным кликом или через расширение Live Server в VS Code).
    
 ### 📌 Документация REST API
 
