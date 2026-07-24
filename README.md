@@ -55,10 +55,18 @@ pip install -r requirements.txt
 ```bash
 uvicorn main:app --reload
 ```
+### **Backend**
+* **Python 3.10+**
+* **FastAPI** — асинхронный фреймворк для быстрого создания RESTful API
+* **SQLAlchemy 2.0 (AsyncIO)** — ORM для работы с базой данных
+* **Pydantic v2** — валидация данных и сериализация
+* **Uvicorn** — асинхронный ASGI-сервер
+
 После запуска сервер будет доступен по следующим адресам:
-🌐 API Server: http://localhost:8000
-📑 Interactive OpenAPI (Swagger) Docs: http://localhost:8000/docs
-💽 Инициализация Базы Данных
+* **🌐 API Server:** http://localhost:8000
+* **📑 Interactive OpenAPI (Swagger) Docs:** http://localhost:8000/docs**
+
+### 💽 Инициализация Базы Данных
 [!IMPORTANT]
 Перед началом работы с приложением обязательно выполните инициализацию БД!
 Без выполнения этого шага таблицы в базе данных не будут созданы, и эндпойнты работы с привычками будут возвращать ошибку сервера.
