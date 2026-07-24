@@ -45,6 +45,7 @@ async def post_habits(habit: HabitAddSchema, session: SessionDep):
     }
 
 
+
 """ GET """
 @router.get("/habits",
          tags=["Привычки 🚬"],
@@ -57,6 +58,7 @@ async def get_habits(session: SessionDep) -> list[HabitSchema]:
     habits = await session.scalars(select(HabitModel))
 
     return habits.all()
+
 
 
 """ GET """
@@ -86,6 +88,7 @@ async def update_habits(habit_id: int, habit_data: HabitAddSchema, session: Sess
     return {
         "ok": True,
     }
+
 
 
 """ PATCH Toggle """

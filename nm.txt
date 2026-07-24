@@ -12,3 +12,4 @@ delete -  http://localhost:8000/habits/{habit_id} - удалить привыч�
 
 у привычек есть поля name, description, id, date_created_habit, checking(отметка об успешном выполнении)
 
+добавить в .gitignore
