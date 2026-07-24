@@ -53,7 +53,7 @@ pip install -r requirements.txt
 ### 2. Запуск бэкенда
 Запустите сервер разработки Uvicorn:
 ```bash
-uvicorn main:app --reload
+uvicorn src.main:app --reload
 ```
 ### **Backend**
 * **Python 3.10+**
