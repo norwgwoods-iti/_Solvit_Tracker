@@ -48,11 +48,13 @@ source venv/bin/activate
 
 # Установите зависимости
 pip install -r requirements.txt
+```
 
-2. Запуск бэкенда
+### 2. Запуск бэкенда
 Запустите сервер разработки Uvicorn:
-Bash
+```bash
 uvicorn main:app --reload
+```
 После запуска сервер будет доступен по следующим адресам:
 🌐 API Server: http://localhost:8000
 📑 Interactive OpenAPI (Swagger) Docs: http://localhost:8000/docs
