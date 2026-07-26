@@ -1,11 +1,7 @@
-from http.client import HTTPException
+import re
 
-from testes import BaseModel, Field, ConfigDict, field_validator
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 from datetime import datetime
-
-from sqlalchemy.sql.annotation import Annotated
-from starlette import status
-from starlette.responses import Response
 
 
 class HabitAddSchema(BaseModel):
@@ -17,11 +13,18 @@ class HabitAddSchema(BaseModel):
 
 
     @field_validator('name')
-    def name_validator(cls, value):
-        if value == 'Привет':
-            raise ValueError('Недопустимое имя привычки')
-        else:
-            return value
+    def name_validator(cls, value: str) -> str:
+
+        symbols = r'[!@#$%^&!*=+-;~]'
+
+        if re.search(symbols, value):
+            raise ValueError(f'Недопустимое имя привычки {cls}')
+
+        if not value.strip():
+            raise ValueError('Название привычки не может состоять из одних пробелов')
+
+        return value.strip()
+
 
 
 class HabitSchema(HabitAddSchema):

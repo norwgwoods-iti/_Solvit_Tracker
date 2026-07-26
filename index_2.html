@@ -7,7 +7,6 @@
     <title>Habit Tracker</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Подключаем FontAwesome для иконок -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
     <style>
@@ -59,19 +58,42 @@
             gap: 15px;
         }
 
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
         input,
         textarea {
-            border: none;
+            border: 2px solid transparent; /* Добавили прозрачную рамку для анимации ошибки */
             background: #f2f5fa;
             border-radius: 12px;
             padding: 14px;
             font-size: 15px;
-            width: 100%; /* Чтобы input занимали всю ширину ячейки грида */
+            width: 100%;
+            transition: border-color 0.2s ease;
         }
 
         input:focus,
         textarea:focus {
-            outline: 2px solid #4f46e5;
+            outline: none;
+            border-color: #4f46e5;
+        }
+
+        /* --- Стили для состояния ошибки валидации --- */
+        input.invalid {
+            border-color: #ef4444 !important;
+            background-color: #fef2f2;
+        }
+
+        .error-message {
+            color: #ef4444;
+            font-size: 12px;
+            font-weight: 500;
+            display: none; /* Скрыто по умолчанию */
+            align-items: center;
+            gap: 4px;
         }
 
         button {
@@ -81,6 +103,13 @@
             padding: 14px 22px;
             font-weight: 600;
             transition: .2s;
+            height: 50px; /* Фиксированная высота для выравнивания с input */
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
         }
 
         .btn-primary {
@@ -91,7 +120,7 @@
             gap: 8px;
         }
 
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             transform: translateY(-2px);
         }
 
@@ -213,9 +242,9 @@
             opacity: .8;
         }
 
-        /* --- Стили для Модального Окна (Редактирования) --- */
+        /* --- Стили для Модального Окна --- */
         .modal {
-            display: none; /* Скрыто по умолчанию */
+            display: none;
             position: fixed;
             z-index: 1000;
             left: 0;
@@ -223,19 +252,19 @@
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgba(0,0,0,0.5); /* Затемнение фона */
-            align-items: center; /* Центрирование по вертикали (flex) */
-            justify-content: center; /* Центрирование по горизонтали (flex) */
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
         }
 
         .modal-content {
             background-color: #fefefe;
             padding: 30px;
             border-radius: 18px;
-            width: 600px; /* Фиксированная ширина окна */
-            max-width: 90%; /* Адаптивность */
+            width: 600px;
+            max-width: 90%;
             box-shadow: 0 15px 40px rgba(0,0,0,0.2);
-            position: relative; /* Для позиционирования крестика закрытия */
+            position: relative;
         }
 
         .modal-header {
@@ -264,7 +293,6 @@
             color: #ef4444;
         }
 
-        /* Форма внутри модального окна - 1 колонка */
         #editForm {
             grid-template-columns: 1fr;
         }
@@ -275,7 +303,6 @@
             gap: 12px;
             margin-top: 20px;
         }
-
 
         @media (max-width: 800px) {
             form {
@@ -294,7 +321,7 @@
                 flex-direction: column;
             }
             .modal-content {
-                width: 95%; /* Почти на весь экран на мобильных */
+                width: 95%;
             }
         }
     </style>
@@ -311,13 +338,23 @@
             </div>
         </header>
 
-        <!-- Карта с формой ДОБАВЛЕНИЯ (POST) -->
+        <!-- Карта с формой ДОБАВЛЕНИЯ -->
         <div class="card" style="margin-bottom: 25px;">
             <form id="addHabitForm">
-                <input id="addName" placeholder="Название привычки" required>
-                <input id="addDescription" placeholder="Краткое описание">
+                <div class="input-group">
+                    <input id="addName" placeholder="Название привычки" required>
+                    <!-- Сообщение об ошибке под полем -->
+                    <div id="addNameError" class="error-message">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        <span>Нельзя использовать спецсимволы: ! @ # $ % ^ & * = + - ; ~</span>
+                    </div>
+                </div>
 
-                <button class="btn-primary" type="submit">
+                <div class="input-group">
+                    <input id="addDescription" placeholder="Краткое описание">
+                </div>
+
+                <button id="addBtn" class="btn-primary" type="submit">
                     <i class="fa-solid fa-plus"></i> Добавить
                 </button>
             </form>
@@ -349,7 +386,7 @@
     </div>
 
 
-    <!-- --- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ (Скрыто по умолчанию) --- -->
+    <!-- --- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ --- -->
     <div id="editModal" class="modal">
         <div class="modal-content">
 
@@ -359,17 +396,25 @@
             </div>
 
             <form id="editForm">
-                <!-- Скрытое поле для ID, чтобы знать, что обновлять -->
                 <input type="hidden" id="editHabitId">
-                <!-- Поле, чтобы хранить текущий статус checking -->
                 <input type="hidden" id="editHabitChecking">
 
-                <input id="editName" placeholder="Название привычки" required>
-                <textarea id="editDescription" placeholder="Краткое описание" rows="2" style="resize: vertical;"></textarea>
+                <div class="input-group">
+                    <input id="editName" placeholder="Название привычки" required>
+                    <!-- Сообщение об ошибке в модалке -->
+                    <div id="editNameError" class="error-message">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        <span>Нельзя использовать спецсимволы: ! @ # $ % ^ & * + - = ; ~</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <textarea id="editDescription" placeholder="Краткое описание" rows="2" style="resize: vertical;"></textarea>
+                </div>
 
                 <div class="modal-actions">
                     <button type="button" class="btn-secondary" onclick="closeModal()">Отмена</button>
-                    <button class="btn-primary" type="submit">
+                    <button id="editBtn" class="btn-primary" type="submit">
                         <i class="fa-solid fa-save"></i> Сохранить
                     </button>
                 </div>
@@ -382,6 +427,45 @@
     <script>
         const API = "http://localhost:8000/habits";
 
+        // Регулярное выражение для спецсимволов: !@#$%^&*=+;-~
+        const FORBIDDEN_SYMBOLS_REGEX = /[!@#$%^&*=+;~\-]/;
+
+        // --- ВАЛИДАЦИЯ ВВОДА ---
+        function validateInput(inputElement, errorElement, submitBtnElement) {
+            const value = inputElement.value;
+            const hasForbiddenSymbols = FORBIDDEN_SYMBOLS_REGEX.test(value);
+
+            if (hasForbiddenSymbols) {
+                inputElement.classList.add("invalid");
+                errorElement.style.display = "flex";
+                submitBtnElement.disabled = true;
+                return false;
+            } else {
+                inputElement.classList.remove("invalid");
+                errorElement.style.display = "none";
+                submitBtnElement.disabled = false;
+                return true;
+            }
+        }
+
+        // Подключаем слушатели событий ввода (input)
+        const addNameInput = document.getElementById("addName");
+        const addNameError = document.getElementById("addNameError");
+        const addBtn = document.getElementById("addBtn");
+
+        addNameInput.addEventListener("input", () => {
+            validateInput(addNameInput, addNameError, addBtn);
+        });
+
+        const editNameInput = document.getElementById("editName");
+        const editNameError = document.getElementById("editNameError");
+        const editBtn = document.getElementById("editBtn");
+
+        editNameInput.addEventListener("input", () => {
+            validateInput(editNameInput, editNameError, editBtn);
+        });
+
+
         // --- Управление Модальным Окном ---
         function openModal() {
             document.getElementById("editModal").style.display = "flex";
@@ -389,10 +473,14 @@
 
         function closeModal() {
             document.getElementById("editModal").style.display = "none";
-            document.getElementById("editForm").reset(); // Очистить поля
+            document.getElementById("editForm").reset();
+
+            // Сбрасываем подсвечивание ошибок при закрытии
+            editNameInput.classList.remove("invalid");
+            editNameError.style.display = "none";
+            editBtn.disabled = false;
         }
 
-        // Закрытие окна при клике вне его области (на затемнение)
         window.onclick = function(event) {
             const modal = document.getElementById("editModal");
             if (event.target == modal) {
@@ -453,7 +541,6 @@
                         ${h.checking ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-solid fa-minus"></i>'}
                     </button>
 
-                    <!-- Вызывает openModal() в editHabit() -->
                     <button class="icon-btn edit" onclick="editHabit(${h.id})" title="Редактировать">
                         <i class="fa-solid fa-pen-to-square"></i>
                     </button>
@@ -468,14 +555,17 @@
         }
 
 
-        // --- ОБРАБОТЧИК: ДОБАВЛЕНИЕ ПРИВЫЧКИ (Main Card Form) ---
+        // --- ОБРАБОТЧИК: ДОБАВЛЕНИЕ ПРИВЫЧКИ ---
         document.getElementById("addHabitForm").addEventListener("submit", async (e) => {
             e.preventDefault();
 
+            // Повторная проверка перед отправкой
+            if (!validateInput(addNameInput, addNameError, addBtn)) return;
+
             const body = {
-                name: document.getElementById("addName").value,
+                name: addNameInput.value,
                 description: document.getElementById("addDescription").value,
-                checking: false // при добавлении всегда false
+                checking: false
             };
 
             try {
@@ -493,36 +583,35 @@
         });
 
 
-        // --- ОБРАБОТЧИК: СОХРАНЕНИЕ ИЗМЕНЕНИЙ (Modal Form) ---
+        // --- ОБРАБОТЧИК: СОХРАНЕНИЕ ИЗМЕНЕНИЙ ---
         document.getElementById("editForm").addEventListener("submit", async (e) => {
             e.preventDefault();
 
+            // Повторная проверка перед отправкой
+            if (!validateInput(editNameInput, editNameError, editBtn)) return;
+
             const id = document.getElementById("editHabitId").value;
-            // Важно: принудительно переводим строку в boolean
             const currentChecking = (document.getElementById("editHabitChecking").value === 'true');
 
             const body = {
-                name: document.getElementById("editName").value,
+                name: editNameInput.value,
                 description: document.getElementById("editDescription").value,
-                // Сохраняем ТЕКУЩИЙ статус выполнения, чтобы не сбрасывать его при PUT-запросе
                 checking: currentChecking
             };
 
             try {
-                // PUT /habits/{id}
                 await fetch(API + "/" + id, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(body)
                 });
 
-                closeModal(); // Закрыть окно
-                loadHabits(); // Обновить список
+                closeModal();
+                loadHabits();
             } catch (error) {
                 console.error("Ошибка сохранения изменений:", error);
             }
         });
-
 
 
         async function deleteHabit(id) {
@@ -535,21 +624,21 @@
             }
         }
 
-        // ПОЛУЧЕНИЕ ДАННЫХ И ОТКРЫТИЕ МОДАЛЬНОГО ОКНА
         async function editHabit(id) {
             try {
                 const res = await fetch(API + "/" + id);
                 const h = await res.json();
 
-                // Заполняем СКРЫТЫЕ поля в модалке
                 document.getElementById("editHabitId").value = h.id;
-                document.getElementById("editHabitChecking").value = h.checking; // Храним текущий статус
+                document.getElementById("editHabitChecking").value = h.checking;
 
-                // Заполняем ВИДИМЫЕ поля в модалке
-                document.getElementById("editName").value = h.name;
+                editNameInput.value = h.name;
                 document.getElementById("editDescription").value = h.description;
 
-                openModal(); // Открываем окно
+                // Проверяем валидность при открытии окна
+                validateInput(editNameInput, editNameError, editBtn);
+
+                openModal();
             } catch (error) {
                 console.error("Ошибка при получении данных:", error);
             }
@@ -557,7 +646,6 @@
 
         async function toggleHabit(id) {
             try {
-                // PATCH /habits/{habit_id}/toggle
                 await fetch(API + "/" + id + "/toggle", {
                     method: "PATCH"
                 });
