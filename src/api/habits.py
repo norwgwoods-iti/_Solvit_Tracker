@@ -1,6 +1,6 @@
 from fastapi import Form, APIRouter
 
-from typing import Annotated
+# from typing import Annotated
 
 from sqlalchemy import select
 
@@ -93,8 +93,7 @@ async def update_habits(habit_id: int, habit_data: HabitAddSchema, session: Sess
 
 """ PATCH Toggle """
 @router.patch("/habits/{habit_id}/toggle",
-              tags=["Привычки 🚬"],
-              summary="Обновить Статус 'Выполнено' по ID")
+              include_in_schema=False)
 async def toggle_habit(habit_id: int, session: SessionDep):
 
     habit = await get_habit_function(session=session, id=habit_id, model=HabitModel)
