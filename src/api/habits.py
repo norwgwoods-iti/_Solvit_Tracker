@@ -1,14 +1,20 @@
-from fastapi import Form, APIRouter
+from typing import Annotated
 
-# from typing import Annotated
+from fastapi import Form, APIRouter, Query, HTTPException
 
-from sqlalchemy import select
+from sqlalchemy import select, delete
+from starlette import status
+from starlette.responses import Response
 
 from src.api.function import get_habit_function
 from src.database import engine, Base
 from src.api.dependencies import SessionDep
-from src.models.habits import HabitModel
-from src.schemas.habits import HabitAddSchema, HabitSchema
+from src.models.habits import HabitModel, CheckinHabitModel
+from src.schemas.habits import HabitAddSchema, HabitSchema, CheckinHabitSchema
+
+from datetime import date
+
+from sqlalchemy.exc import IntegrityError
 
 router = APIRouter()
 
@@ -38,7 +44,16 @@ async def post_habits(habit: HabitAddSchema, session: SessionDep):
         description=habit.description
     )
     session.add(new_habit)
-    await session.commit()
+
+    try:
+        await session.commit()
+    except IntegrityError:
+        await session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f'Habit with name {habit.name} already exists'
+        )
+
 
     return {
         "ok": True,
@@ -67,7 +82,30 @@ async def get_habits(session: SessionDep) -> list[HabitSchema]:
          summary="Получить привычку по ID")
 async def get_habits(habit_id: int, session: SessionDep) -> HabitSchema:
 
-    return await get_habit_function(session=session, id=habit_id, model=HabitModel)
+    habit = await get_habit_function(session=session, id=habit_id, model=HabitModel)
+
+    return habit
+
+
+""" GET Stats """
+@router.get("/habits/{habit_id}/stats")
+async def get_habits_stats(
+        habit_id: int,
+        date_from: date,
+        date_to: date,
+        session: SessionDep) -> list[CheckinHabitSchema]:
+
+
+    query = select(CheckinHabitModel).where(
+        CheckinHabitModel.id_habit == habit_id,
+        CheckinHabitModel.checkins_date.between(date_from, date_to)
+    )
+
+    result = await session.execute(query)
+
+    habits_with_date = result.scalars().all()
+
+    return habits_with_date
 
 
 
@@ -91,8 +129,8 @@ async def update_habits(habit_id: int, habit_data: HabitAddSchema, session: Sess
 
 
 
-""" PATCH Toggle """
-@router.patch("/habits/{habit_id}/toggle",
+""" POST Toggle """
+@router.post("/habits/{habit_id}/checkins",
               include_in_schema=False)
 async def toggle_habit(habit_id: int, session: SessionDep):
 
@@ -100,12 +138,63 @@ async def toggle_habit(habit_id: int, session: SessionDep):
 
     habit.checking = not habit.checking
 
+    if habit.checking:
+        new_check = CheckinHabitModel(
+            id_habit=habit.id,
+            checkins_date=date.today()
+        )
+
+        session.add(new_check)
+    else:
+
+        query = delete(CheckinHabitModel).where(
+            CheckinHabitModel.id_habit == habit.id,
+            CheckinHabitModel.checkins_date == date.today()
+        )
+
+        await session.execute(query)
+
     await session.commit()
     await session.refresh(habit)
+
+
 
     return {
         "ok": True,
         "checking": habit.checking
+    }
+
+
+
+""" DELETE """
+@router.delete("/habits/{habit_id}/checkins",
+          tags=["Привычки 🚬"],
+        summary="Удалить привычку по дате")
+async def delete_habit_with_date(
+        habit_id: int,
+        date: Annotated[date, Query(
+            alias='date'
+        )],
+        session: SessionDep
+):
+
+    query = delete(HabitModel).where(
+        HabitModel.id == habit_id,
+        HabitModel.date_created_habit == date
+    )
+
+    result = await session.execute(query)
+
+    if result.rowcount == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'Habit with ID={habit_id} for date {date} not found'
+        )
+
+    await session.commit()
+
+    return {
+        "ok": True,
     }
 
 
