@@ -5,9 +5,8 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-
 from src.api import main_router
-from src.api.dependencies import SessionDep
+
 from database.function import update_database
 
 from src.database import engine, new_session
@@ -18,7 +17,7 @@ async def lifespan(app: FastAPI):
 
     scheduler = AsyncIOScheduler()
 
-    scheduler.add_job(update_database, 'cron', hour=12, minute=59, args=[new_session])
+    scheduler.add_job(update_database, 'cron', hour=00, minute=00, args=[new_session])
     scheduler.start()
 
     yield

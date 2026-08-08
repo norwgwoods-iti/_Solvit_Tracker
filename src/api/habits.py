@@ -177,11 +177,12 @@ async def delete_habit_with_date(
         )],
         session: SessionDep
 ):
-
-    query = delete(HabitModel).where(
-        HabitModel.id == habit_id,
-        HabitModel.date_created_habit == date
+    # !!!!!!
+    query = delete(CheckinHabitModel).where(
+        CheckinHabitModel.id == habit_id,
+        CheckinHabitModel.checkins_date == date
     )
+    # !!!!!!
 
     result = await session.execute(query)
 
@@ -205,6 +206,8 @@ async def delete_habit_with_date(
 async def delete_habit(habit_id: int, session: SessionDep):
 
     habit = await get_habit_function(session=session, id=habit_id, model=HabitModel)
+
+
 
     await session.delete(habit)
     await session.commit()
